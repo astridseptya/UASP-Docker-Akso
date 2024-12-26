@@ -1,0 +1,62 @@
+version: '3.9'
+name: my_docker_project
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web_data:/usr/share/nginx/html
+    networks:
+      - web_network
+    environment:
+      - TZ=Asia/Jakarta
+      - NGINX_HOST=localhost
+      - NGINX_PORT=8080
+    restart: always
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - web_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always
+
+volumes:
+  db_data:
+    driver: local
+  php_data:
+    driver: local
+  nginx_html:
+    driver: local
+
+networks:
+  web_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "192.168.1.0/24"
+
+configs:
+  custom_nginx_config:
+    file: ./nginx.conf
+  custom_php_config:
+    file: ./php.ini
